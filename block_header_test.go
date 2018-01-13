@@ -6,8 +6,11 @@ import (
 )
 
 func TestCreateBlockHeader(t *testing.T) {
-	data := []byte("hello, world!")
-	bh := NewGenesisBlockHeader(0, 0, data)
+	tx := &Transaction{}
+	data := make([]*Transaction, 0)
+	data = append(data, tx)
+	bh, err := NewGenesisBlockHeader(0, 0, data)
+	assert.NoError(t, err)
 	assert.True(t, bh.IsValid(data))
-	assert.False(t, bh.IsValid([]byte("goodbye, world!")))
+	assert.False(t, bh.IsValid(make([]*Transaction, 0)))
 }

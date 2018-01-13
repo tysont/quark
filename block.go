@@ -2,10 +2,10 @@ package quark
 
 type Block struct {
 	Header *BlockHeader
-	Data []byte
+	Data []*Transaction
 }
 
-func NewBlock(header *BlockHeader, data []byte) *Block {
+func NewBlock(header *BlockHeader, data []*Transaction) *Block {
 	return &Block{
 		Header: header,
 		Data: data,
