@@ -7,7 +7,7 @@ import (
 
 func TestCreateBlockHeader(t *testing.T) {
 	data := []byte("hello, world!")
-	bh := NewGenesisBlockHeader(0, data)
+	bh := NewGenesisBlockHeader(0, 0, data)
 	assert.True(t, bh.IsValid(data))
 	assert.False(t, bh.IsValid([]byte("goodbye, world!")))
 }
