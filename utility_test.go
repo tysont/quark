@@ -4,7 +4,6 @@ import (
 	"testing"
 	"reflect"
 	"github.com/stretchr/testify/assert"
-	"fmt"
 	"strings"
 )
 
@@ -23,7 +22,7 @@ func TestEncodeDecode(t *testing.T) {
 	assert.Equal(t, o, d)
 }
 
-func TestMineBlock(t *testing.T) {
+func TestMineBlocks(t *testing.T) {
 	bc := NewBlockChain()
 	tx := &Transaction{}
 	data := make([]*Transaction, 0)
@@ -38,8 +37,10 @@ func TestMineBlock(t *testing.T) {
 	for i := 0; i < size; i++ {
 		block := mine(bc, d, data)
 		assert.NotNil(t, block)
-		s := string(block.Header.Hash)
-		fmt.Println(s)
-		assert.True(t, strings.HasPrefix(s, m))
+		assert.True(t, block.Header.IsValid(data))
+		assert.True(t, strings.HasPrefix(block.Header.Hash, m))
+		if i > 0 {
+			assert.Equal(t, block.Header.PreviousHash, bc.Blocks[i - 1].Header.Hash)
+		}
 	}
 }
