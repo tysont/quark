@@ -14,12 +14,13 @@ func TestEncodeDecode(t *testing.T) {
 	}{
 		Payload: s,
 	}
+	p := &o
 
-	b, err := encode(o)
+	b, err := encode(p)
 	assert.NoError(t, err)
-	d, err := decode(reflect.TypeOf(o), b)
+	d, err := decode(reflect.TypeOf(p), b)
 	assert.NoError(t, err)
-	assert.Equal(t, o, d)
+	assert.Equal(t, p, d)
 }
 
 func TestMineBlocks(t *testing.T) {
