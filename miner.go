@@ -1,3 +1,5 @@
+// ABOUTME: Miner performs proof-of-work mining and injects coinbase
+// ABOUTME: reward transactions into each mined block.
 package quark
 
 const MiningReward int64 = 50

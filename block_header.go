@@ -1,3 +1,5 @@
+// ABOUTME: BlockHeader contains proof-of-work metadata and links
+// ABOUTME: blocks together via cryptographic hash chaining.
 package quark
 
 import (

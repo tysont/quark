@@ -1,3 +1,5 @@
+// ABOUTME: Mining utilities for SHA-256 block hashing, proof-of-work
+// ABOUTME: difficulty checking, and the core mining loop.
 package quark
 
 import (

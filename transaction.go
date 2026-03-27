@@ -1,3 +1,5 @@
+// ABOUTME: Transaction represents a signed transfer of value between
+// ABOUTME: wallet addresses, with coinbase support for mining rewards.
 package quark
 
 import (

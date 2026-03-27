@@ -1,3 +1,5 @@
+// ABOUTME: Cryptographic utilities for RSA keypair generation
+// ABOUTME: used by wallets for identity and transaction signing.
 package quark
 
 import (

@@ -1,3 +1,5 @@
+// ABOUTME: BlockChain is the ordered ledger of blocks with balance
+// ABOUTME: computation and chain integrity validation.
 package quark
 
 type BlockChain struct {

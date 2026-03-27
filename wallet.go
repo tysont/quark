@@ -1,3 +1,5 @@
+// ABOUTME: Wallet provides keypair-based identity for blockchain
+// ABOUTME: participants, deriving addresses from public key hashes.
 package quark
 
 import (

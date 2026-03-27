@@ -1,3 +1,5 @@
+// ABOUTME: Serialization utilities for converting structs to and
+// ABOUTME: from bytes using Go's gob encoding.
 package quark
 
 import (

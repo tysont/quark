@@ -1,3 +1,5 @@
+// ABOUTME: Block pairs a proof-of-work header with a list of
+// ABOUTME: transactions to form a single unit in the chain.
 package quark
 
 type Block struct {
