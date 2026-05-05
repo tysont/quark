@@ -1,10 +1,11 @@
 package quark
 
 import (
-	"testing"
 	"reflect"
-	"github.com/stretchr/testify/assert"
 	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEncodeDecode(t *testing.T) {
@@ -23,25 +24,41 @@ func TestEncodeDecode(t *testing.T) {
 	assert.Equal(t, p, d)
 }
 
-func TestMineBlocks(t *testing.T) {
-	bc := NewBlockChain()
-	tx := &Transaction{}
-	data := make([]*Transaction, 0)
-	data = append(data, tx)
+func TestMineHeaderMeetsDifficulty(t *testing.T) {
 	d := int32(12)
-	m := ""
-	for i := 0; i < int(d / 4); i++ {
-		m = m + "0"
-	}
+	prefix := strings.Repeat("0", int(d/4))
 
-	size := 4
-	for i := 0; i < size; i++ {
-		block := mine(bc, d, data)
-		assert.NotNil(t, block)
-		assert.True(t, block.Header.IsValid(data))
-		assert.True(t, strings.HasPrefix(block.Header.Hash, m))
-		if i > 0 {
-			assert.Equal(t, block.Header.PreviousHash, bc.Blocks[i - 1].Header.Hash)
-		}
-	}
+	bh := mineHeader("", nil, d)
+	assert.True(t, bh.IsValid())
+	assert.True(t, strings.HasPrefix(bh.Hash, prefix))
+}
+
+func TestMerkleRootDeterministic(t *testing.T) {
+	w, err := NewWallet()
+	assert.NoError(t, err)
+
+	tx := NewTransaction(w.Address(), "recipient", 10)
+	err = tx.Sign(w)
+	assert.NoError(t, err)
+
+	r1 := merkleRoot([]*Transaction{tx})
+	r2 := merkleRoot([]*Transaction{tx})
+	assert.Equal(t, r1, r2)
+}
+
+func TestMerkleRootChangesWithTransactions(t *testing.T) {
+	w, err := NewWallet()
+	assert.NoError(t, err)
+
+	tx1 := NewTransaction(w.Address(), "a", 10)
+	err = tx1.Sign(w)
+	assert.NoError(t, err)
+
+	tx2 := NewTransaction(w.Address(), "b", 10)
+	err = tx2.Sign(w)
+	assert.NoError(t, err)
+
+	r1 := merkleRoot([]*Transaction{tx1})
+	r2 := merkleRoot([]*Transaction{tx1, tx2})
+	assert.NotEqual(t, r1, r2)
 }

@@ -4,8 +4,6 @@ package quark
 
 import (
 	"crypto/rsa"
-	"crypto/sha256"
-	"encoding/hex"
 )
 
 type Wallet struct {
@@ -25,9 +23,8 @@ func NewWallet() (*Wallet, error) {
 }
 
 func (w *Wallet) Address() string {
-	b, _ := encode(w.publicKey)
-	h := sha256.Sum256(b)
-	return hex.EncodeToString(h[:])
+	addr, _ := addressFromPublicKey(w.publicKey)
+	return addr
 }
 
 func (w *Wallet) PublicKey() *rsa.PublicKey {

@@ -2,15 +2,32 @@ package quark
 
 import (
 	"testing"
+
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateBlockHeader(t *testing.T) {
-	tx := &Transaction{}
-	data := make([]*Transaction, 0)
-	data = append(data, tx)
-	bh, err := NewGenesisBlockHeader(0, 0, data)
-	assert.NoError(t, err)
-	assert.True(t, bh.IsValid(data))
-	assert.False(t, bh.IsValid(make([]*Transaction, 0)))
+func TestBlockHeaderHashIsDeterministic(t *testing.T) {
+	bh := &BlockHeader{
+		PreviousHash: "abc",
+		MerkleRoot:   "def",
+		Timestamp:    1,
+		Nonce:        2,
+		Difficulty:   3,
+	}
+	assert.Equal(t, bh.computeHash(), bh.computeHash())
+}
+
+func TestBlockHeaderIsValidRequiresMatchingHash(t *testing.T) {
+	bh := mineHeader("", nil, 4)
+	assert.True(t, bh.IsValid())
+
+	bh.Hash = "0000000000000000000000000000000000000000000000000000000000000000"
+	assert.False(t, bh.IsValid())
+}
+
+func TestBlockHeaderIsValidRequiresDifficulty(t *testing.T) {
+	bh := mineHeader("", nil, 4)
+	bh.Difficulty = 200
+	bh.Hash = bh.computeHash()
+	assert.False(t, bh.IsValid())
 }

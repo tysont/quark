@@ -18,9 +18,10 @@ func TestMinerMineBlock(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	block := m.Mine(bc, 8, nil)
+	block, err := m.Mine(bc, 8, nil)
+	assert.NoError(t, err)
 	assert.NotNil(t, block)
-	assert.Equal(t, 1, bc.Length())
+	assert.Equal(t, 2, bc.Length())
 }
 
 func TestMinerCoinbaseReward(t *testing.T) {
@@ -28,7 +29,8 @@ func TestMinerCoinbaseReward(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	block := m.Mine(bc, 8, nil)
+	block, err := m.Mine(bc, 8, nil)
+	assert.NoError(t, err)
 	assert.True(t, len(block.Data) >= 1)
 
 	coinbase := block.Data[0]
@@ -38,14 +40,22 @@ func TestMinerCoinbaseReward(t *testing.T) {
 }
 
 func TestMinerIncludesTransactions(t *testing.T) {
-	m, err := NewMiner()
+	sender, err := NewMiner()
+	assert.NoError(t, err)
+	miner, err := NewMiner()
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	tx := NewTransaction("sender", "recipient", 10)
-	block := m.Mine(bc, 8, []*Transaction{tx})
+	_, err = sender.Mine(bc, 8, nil) // fund sender
+	assert.NoError(t, err)
 
-	assert.Equal(t, 2, len(block.Data)) // coinbase + user tx
+	tx := NewTransaction(sender.Wallet.Address(), "recipient", 10)
+	err = tx.Sign(sender.Wallet)
+	assert.NoError(t, err)
+
+	block, err := miner.Mine(bc, 8, []*Transaction{tx})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(block.Data))
 	assert.True(t, block.Data[0].IsCoinbase())
-	assert.Equal(t, "sender", block.Data[1].Sender)
+	assert.Equal(t, sender.Wallet.Address(), block.Data[1].Sender)
 }
