@@ -4,6 +4,7 @@ package quark
 
 import (
 	"errors"
+	"time"
 )
 
 const MiningReward int64 = 50
@@ -20,12 +21,21 @@ func NewMiner() (*Miner, error) {
 	return &Miner{Wallet: w}, nil
 }
 
-func (m *Miner) Mine(bc *BlockChain, difficulty int32, transactions []*Transaction) (*Block, error) {
+func (m *Miner) Mine(bc *BlockChain, transactions []*Transaction) (*Block, error) {
+	return m.mineAt(bc, transactions, time.Now().Unix())
+}
+
+func (m *Miner) mineAt(bc *BlockChain, transactions []*Transaction, timestamp int64) (*Block, error) {
 	coinbase := NewCoinbaseTransaction(m.Wallet.Address(), MiningReward)
 	coinbase.Nonce = int64(bc.Length())
 	all := append([]*Transaction{coinbase}, transactions...)
 
-	header := mineHeader(bc.Last().Header.Hash, all, difficulty)
+	difficulty := bc.NextDifficulty()
+	prev := bc.Last()
+	if timestamp < prev.Header.Timestamp {
+		timestamp = prev.Header.Timestamp
+	}
+	header := mineHeader(prev.Header.Hash, all, difficulty, timestamp)
 	block := &Block{Header: header, Data: all}
 
 	if err := bc.Append(block); err != nil {

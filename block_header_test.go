@@ -18,7 +18,7 @@ func TestBlockHeaderHashIsDeterministic(t *testing.T) {
 }
 
 func TestBlockHeaderIsValidRequiresMatchingHash(t *testing.T) {
-	bh := mineHeader("", nil, 4)
+	bh := mineHeader("", nil, 4, 1)
 	assert.True(t, bh.IsValid())
 
 	bh.Hash = "0000000000000000000000000000000000000000000000000000000000000000"
@@ -26,7 +26,7 @@ func TestBlockHeaderIsValidRequiresMatchingHash(t *testing.T) {
 }
 
 func TestBlockHeaderIsValidRequiresDifficulty(t *testing.T) {
-	bh := mineHeader("", nil, 4)
+	bh := mineHeader("", nil, 4, 1)
 	bh.Difficulty = 200
 	bh.Hash = bh.computeHash()
 	assert.False(t, bh.IsValid())

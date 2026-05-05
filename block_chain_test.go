@@ -18,7 +18,7 @@ func TestBalanceAfterMining(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	_, err = m.Mine(bc, 8, nil)
+	_, err = m.Mine(bc, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, MiningReward, bc.Balance(m.Wallet.Address()))
 }
@@ -30,7 +30,7 @@ func TestBalanceAfterMultipleMines(t *testing.T) {
 
 	n := 3
 	for i := 0; i < n; i++ {
-		_, err = m.Mine(bc, 8, nil)
+		_, err = m.Mine(bc, nil)
 		assert.NoError(t, err)
 	}
 	assert.Equal(t, MiningReward*int64(n), bc.Balance(m.Wallet.Address()))
@@ -43,14 +43,14 @@ func TestBalanceAfterTransfer(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	_, err = sender.Mine(bc, 8, nil)
+	_, err = sender.Mine(bc, nil)
 	assert.NoError(t, err)
 
 	tx := NewTransaction(sender.Wallet.Address(), recipient.Address(), 30)
 	err = tx.Sign(sender.Wallet)
 	assert.NoError(t, err)
 
-	_, err = sender.Mine(bc, 8, []*Transaction{tx})
+	_, err = sender.Mine(bc, []*Transaction{tx})
 	assert.NoError(t, err)
 
 	assert.Equal(t, int64(70), bc.Balance(sender.Wallet.Address()))
@@ -68,7 +68,7 @@ func TestValidateChainWithBlocks(t *testing.T) {
 	bc := NewBlockChain()
 
 	for i := 0; i < 3; i++ {
-		_, err = m.Mine(bc, 8, nil)
+		_, err = m.Mine(bc, nil)
 		assert.NoError(t, err)
 	}
 	assert.True(t, bc.IsValid())
@@ -79,9 +79,9 @@ func TestValidateChainWithTamperedTransaction(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	_, err = m.Mine(bc, 8, nil)
+	_, err = m.Mine(bc, nil)
 	assert.NoError(t, err)
-	_, err = m.Mine(bc, 8, nil)
+	_, err = m.Mine(bc, nil)
 	assert.NoError(t, err)
 
 	bc.Blocks[1].Data[0].Amount = 999
@@ -93,9 +93,9 @@ func TestValidateChainBrokenLink(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	_, err = m.Mine(bc, 8, nil)
+	_, err = m.Mine(bc, nil)
 	assert.NoError(t, err)
-	_, err = m.Mine(bc, 8, nil)
+	_, err = m.Mine(bc, nil)
 	assert.NoError(t, err)
 
 	bc.Blocks[2].Header.PreviousHash = "0000000000000000000000000000000000000000000000000000000000000000"
@@ -111,7 +111,7 @@ func TestRejectBlockWithoutCoinbase(t *testing.T) {
 	err = tx.Sign(w)
 	assert.NoError(t, err)
 
-	header := mineHeader(bc.Last().Header.Hash, []*Transaction{tx}, 8)
+	header := mineHeader(bc.Last().Header.Hash, []*Transaction{tx}, 8, 1)
 	block := &Block{Header: header, Data: []*Transaction{tx}}
 	assert.Error(t, bc.Append(block))
 }
@@ -124,7 +124,7 @@ func TestRejectBlockWithTwoCoinbases(t *testing.T) {
 	c1 := NewCoinbaseTransaction(m.Wallet.Address(), MiningReward)
 	c2 := NewCoinbaseTransaction(m.Wallet.Address(), MiningReward)
 	txs := []*Transaction{c1, c2}
-	header := mineHeader(bc.Last().Header.Hash, txs, 8)
+	header := mineHeader(bc.Last().Header.Hash, txs, 8, 1)
 	block := &Block{Header: header, Data: txs}
 	assert.Error(t, bc.Append(block))
 }
@@ -136,7 +136,7 @@ func TestRejectBlockWithOversizedCoinbase(t *testing.T) {
 
 	cb := NewCoinbaseTransaction(m.Wallet.Address(), MiningReward+1)
 	txs := []*Transaction{cb}
-	header := mineHeader(bc.Last().Header.Hash, txs, 8)
+	header := mineHeader(bc.Last().Header.Hash, txs, 8, 1)
 	block := &Block{Header: header, Data: txs}
 	assert.Error(t, bc.Append(block))
 }
@@ -150,7 +150,7 @@ func TestRejectInsufficientBalance(t *testing.T) {
 	err = tx.Sign(m.Wallet)
 	assert.NoError(t, err)
 
-	_, err = m.Mine(bc, 8, []*Transaction{tx})
+	_, err = m.Mine(bc, []*Transaction{tx})
 	assert.Error(t, err)
 }
 
@@ -158,17 +158,17 @@ func TestRejectDuplicateTransaction(t *testing.T) {
 	sender, err := NewMiner()
 	assert.NoError(t, err)
 	bc := NewBlockChain()
-	_, err = sender.Mine(bc, 8, nil)
+	_, err = sender.Mine(bc, nil)
 	assert.NoError(t, err)
 
 	tx := NewTransaction(sender.Wallet.Address(), "recipient", 10)
 	err = tx.Sign(sender.Wallet)
 	assert.NoError(t, err)
 
-	_, err = sender.Mine(bc, 8, []*Transaction{tx})
+	_, err = sender.Mine(bc, []*Transaction{tx})
 	assert.NoError(t, err)
 
-	_, err = sender.Mine(bc, 8, []*Transaction{tx})
+	_, err = sender.Mine(bc, []*Transaction{tx})
 	assert.Error(t, err)
 }
 
@@ -176,7 +176,7 @@ func TestRejectInvalidSignature(t *testing.T) {
 	sender, err := NewMiner()
 	assert.NoError(t, err)
 	bc := NewBlockChain()
-	_, err = sender.Mine(bc, 8, nil)
+	_, err = sender.Mine(bc, nil)
 	assert.NoError(t, err)
 
 	tx := NewTransaction(sender.Wallet.Address(), "recipient", 10)
@@ -184,7 +184,7 @@ func TestRejectInvalidSignature(t *testing.T) {
 	assert.NoError(t, err)
 	tx.Signature[0] ^= 0xFF
 
-	_, err = sender.Mine(bc, 8, []*Transaction{tx})
+	_, err = sender.Mine(bc, []*Transaction{tx})
 	assert.Error(t, err)
 }
 
@@ -192,7 +192,7 @@ func TestRejectTamperedMerkleRoot(t *testing.T) {
 	m, err := NewMiner()
 	assert.NoError(t, err)
 	bc := NewBlockChain()
-	_, err = m.Mine(bc, 8, nil)
+	_, err = m.Mine(bc, nil)
 	assert.NoError(t, err)
 
 	bc.Blocks[1].Header.MerkleRoot = "0000000000000000000000000000000000000000000000000000000000000000"
@@ -206,9 +206,9 @@ func TestEndToEnd(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	_, err = minerA.Mine(bc, 8, nil)
+	_, err = minerA.Mine(bc, nil)
 	assert.NoError(t, err)
-	_, err = minerA.Mine(bc, 8, nil)
+	_, err = minerA.Mine(bc, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, MiningReward*2, bc.Balance(minerA.Wallet.Address()))
 
@@ -217,7 +217,7 @@ func TestEndToEnd(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, tx.Verify())
 
-	_, err = minerB.Mine(bc, 8, []*Transaction{tx})
+	_, err = minerB.Mine(bc, []*Transaction{tx})
 	assert.NoError(t, err)
 
 	assert.Equal(t, int64(70), bc.Balance(minerA.Wallet.Address()))

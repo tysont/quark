@@ -5,7 +5,6 @@ package quark
 import (
 	"encoding/hex"
 	"math/big"
-	"time"
 )
 
 func meetsDifficulty(headerHash string, difficulty int32) (bool, error) {
@@ -20,11 +19,11 @@ func meetsDifficulty(headerHash string, difficulty int32) (bool, error) {
 	return x.Cmp(target) < 0, nil
 }
 
-func mineHeader(previousHash string, txs []*Transaction, difficulty int32) *BlockHeader {
+func mineHeader(previousHash string, txs []*Transaction, difficulty int32, timestamp int64) *BlockHeader {
 	bh := &BlockHeader{
 		PreviousHash: previousHash,
 		MerkleRoot:   merkleRoot(txs),
-		Timestamp:    time.Now().Unix(),
+		Timestamp:    timestamp,
 		Difficulty:   difficulty,
 	}
 	for nonce := int64(0); ; nonce++ {

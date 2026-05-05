@@ -18,7 +18,7 @@ func TestMinerMineBlock(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	block, err := m.Mine(bc, 8, nil)
+	block, err := m.Mine(bc, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, block)
 	assert.Equal(t, 2, bc.Length())
@@ -29,7 +29,7 @@ func TestMinerCoinbaseReward(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	block, err := m.Mine(bc, 8, nil)
+	block, err := m.Mine(bc, nil)
 	assert.NoError(t, err)
 	assert.True(t, len(block.Data) >= 1)
 
@@ -46,14 +46,14 @@ func TestMinerIncludesTransactions(t *testing.T) {
 	assert.NoError(t, err)
 	bc := NewBlockChain()
 
-	_, err = sender.Mine(bc, 8, nil) // fund sender
+	_, err = sender.Mine(bc, nil) // fund sender
 	assert.NoError(t, err)
 
 	tx := NewTransaction(sender.Wallet.Address(), "recipient", 10)
 	err = tx.Sign(sender.Wallet)
 	assert.NoError(t, err)
 
-	block, err := miner.Mine(bc, 8, []*Transaction{tx})
+	block, err := miner.Mine(bc, []*Transaction{tx})
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(block.Data))
 	assert.True(t, block.Data[0].IsCoinbase())

@@ -66,12 +66,12 @@ func (n *Node) SubmitTransaction(tx *Transaction) error {
 	return n.Mempool.Add(tx)
 }
 
-func (n *Node) Mine(difficulty int32) (*Block, error) {
+func (n *Node) Mine() (*Block, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
 	pending := n.Mempool.Pending()
-	block, err := n.Miner.Mine(n.Chain, difficulty, pending)
+	block, err := n.Miner.Mine(n.Chain, pending)
 	if err != nil {
 		return nil, err
 	}

@@ -1,5 +1,5 @@
 // ABOUTME: BlockChain is the ordered ledger of blocks with balance
-// ABOUTME: computation and full chain integrity validation.
+// ABOUTME: computation, difficulty rules, and chain validation.
 package quark
 
 import (
@@ -10,11 +10,17 @@ const GenesisPreviousHash = ""
 
 type BlockChain struct {
 	Blocks []*Block
+	Config *DifficultyConfig
 }
 
 func NewBlockChain() *BlockChain {
+	return NewBlockChainWithConfig(DefaultDifficultyConfig())
+}
+
+func NewBlockChainWithConfig(cfg *DifficultyConfig) *BlockChain {
 	return &BlockChain{
 		Blocks: []*Block{newGenesisBlock()},
+		Config: cfg,
 	}
 }
 
@@ -36,6 +42,33 @@ func (bc *BlockChain) Length() int {
 
 func (bc *BlockChain) Last() *Block {
 	return bc.Blocks[len(bc.Blocks)-1]
+}
+
+func (bc *BlockChain) NextDifficulty() int32 {
+	return bc.DifficultyAt(bc.Length())
+}
+
+func (bc *BlockChain) DifficultyAt(height int) int32 {
+	if height <= 0 {
+		return 0
+	}
+	cfg := bc.Config
+	if cfg == nil || cfg.RetargetInterval <= 0 {
+		return cfg.InitialDifficulty
+	}
+	diff := cfg.InitialDifficulty
+	epoch := (height - 1) / cfg.RetargetInterval
+	for e := 1; e <= epoch; e++ {
+		startIdx := (e-1)*cfg.RetargetInterval + 1
+		endIdx := e * cfg.RetargetInterval
+		if endIdx >= len(bc.Blocks) {
+			break
+		}
+		actual := bc.Blocks[endIdx].Header.Timestamp - bc.Blocks[startIdx].Header.Timestamp
+		target := int64(cfg.RetargetInterval-1) * cfg.TargetBlockTime
+		diff = adjustDifficulty(diff, target, actual, cfg.MaxAdjustFactor)
+	}
+	return diff
 }
 
 func (bc *BlockChain) Balance(address string) int64 {
@@ -61,7 +94,6 @@ func (bc *BlockChain) Validate() error {
 	if len(bc.Blocks) == 0 {
 		return errors.New("chain has no genesis block")
 	}
-
 	expectedGenesis := newGenesisBlock()
 	if bc.Blocks[0].Header.Hash != expectedGenesis.Header.Hash {
 		return errors.New("genesis block does not match expected genesis")
@@ -71,13 +103,7 @@ func (bc *BlockChain) Validate() error {
 	seenTxHashes := map[string]bool{}
 
 	for i := 1; i < len(bc.Blocks); i++ {
-		block := bc.Blocks[i]
-		prev := bc.Blocks[i-1]
-
-		if err := validateBlockStructure(block, prev); err != nil {
-			return err
-		}
-		if err := applyBlockTransactions(block, balances, seenTxHashes); err != nil {
+		if err := bc.validateBlockAt(i, balances, seenTxHashes); err != nil {
 			return err
 		}
 	}
@@ -85,8 +111,9 @@ func (bc *BlockChain) Validate() error {
 }
 
 func (bc *BlockChain) Append(block *Block) error {
+	height := bc.Length()
 	prev := bc.Last()
-	if err := validateBlockStructure(block, prev); err != nil {
+	if err := validateBlockStructure(block, prev, bc.DifficultyAt(height)); err != nil {
 		return err
 	}
 
@@ -105,7 +132,16 @@ func (bc *BlockChain) Append(block *Block) error {
 	return nil
 }
 
-func validateBlockStructure(block, prev *Block) error {
+func (bc *BlockChain) validateBlockAt(i int, balances map[string]int64, seen map[string]bool) error {
+	block := bc.Blocks[i]
+	prev := bc.Blocks[i-1]
+	if err := validateBlockStructure(block, prev, bc.DifficultyAt(i)); err != nil {
+		return err
+	}
+	return applyBlockTransactions(block, balances, seen)
+}
+
+func validateBlockStructure(block, prev *Block, expectedDifficulty int32) error {
 	if block.Header.PreviousHash != prev.Header.Hash {
 		return errors.New("block previous hash does not link to prior block")
 	}
@@ -114,6 +150,9 @@ func validateBlockStructure(block, prev *Block) error {
 	}
 	if block.Header.MerkleRoot != merkleRoot(block.Data) {
 		return errors.New("block merkle root does not match transactions")
+	}
+	if block.Header.Difficulty != expectedDifficulty {
+		return errors.New("block difficulty does not match expected difficulty")
 	}
 	if !block.Header.IsValid() {
 		return errors.New("block header hash is invalid or fails difficulty")

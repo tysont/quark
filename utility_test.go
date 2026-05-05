@@ -28,7 +28,7 @@ func TestMineHeaderMeetsDifficulty(t *testing.T) {
 	d := int32(12)
 	prefix := strings.Repeat("0", int(d/4))
 
-	bh := mineHeader("", nil, d)
+	bh := mineHeader("", nil, d, 1)
 	assert.True(t, bh.IsValid())
 	assert.True(t, strings.HasPrefix(bh.Hash, prefix))
 }

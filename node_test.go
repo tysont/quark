@@ -10,7 +10,7 @@ func TestNodeMineMovesCoinbaseIntoChain(t *testing.T) {
 	n, err := NewNode()
 	assert.NoError(t, err)
 
-	_, err = n.Mine(8)
+	_, err = n.Mine()
 	assert.NoError(t, err)
 	assert.Equal(t, MiningReward, n.Balance(n.Address()))
 	assert.Equal(t, 0, n.Mempool.Len())
@@ -22,7 +22,7 @@ func TestNodeSubmitAndMineFlow(t *testing.T) {
 	receiver, err := NewWallet()
 	assert.NoError(t, err)
 
-	_, err = sender.Mine(8)
+	_, err = sender.Mine()
 	assert.NoError(t, err)
 
 	tx := NewTransaction(sender.Address(), receiver.Address(), 20)
@@ -30,7 +30,7 @@ func TestNodeSubmitAndMineFlow(t *testing.T) {
 	assert.NoError(t, sender.SubmitTransaction(tx))
 	assert.Equal(t, 1, sender.Mempool.Len())
 
-	_, err = sender.Mine(8)
+	_, err = sender.Mine()
 	assert.NoError(t, err)
 	assert.Equal(t, 0, sender.Mempool.Len())
 	assert.Equal(t, int64(80), sender.Balance(sender.Address()))
@@ -40,7 +40,7 @@ func TestNodeSubmitAndMineFlow(t *testing.T) {
 func TestNodeRejectsBadSignature(t *testing.T) {
 	n, err := NewNode()
 	assert.NoError(t, err)
-	_, err = n.Mine(8)
+	_, err = n.Mine()
 	assert.NoError(t, err)
 
 	tx := NewTransaction(n.Address(), "recipient", 5)
@@ -52,7 +52,7 @@ func TestNodeRejectsBadSignature(t *testing.T) {
 func TestNodeRejectsInsufficientBalance(t *testing.T) {
 	n, err := NewNode()
 	assert.NoError(t, err)
-	_, err = n.Mine(8)
+	_, err = n.Mine()
 	assert.NoError(t, err)
 
 	tx := NewTransaction(n.Address(), "recipient", 999)
@@ -63,7 +63,7 @@ func TestNodeRejectsInsufficientBalance(t *testing.T) {
 func TestNodeRejectsInsufficientBalanceConsideringMempool(t *testing.T) {
 	n, err := NewNode()
 	assert.NoError(t, err)
-	_, err = n.Mine(8) // 50
+	_, err = n.Mine() // 50
 	assert.NoError(t, err)
 
 	tx1 := NewTransaction(n.Address(), "a", 30)
@@ -80,7 +80,7 @@ func TestNodeRejectsInsufficientBalanceConsideringMempool(t *testing.T) {
 func TestNodeRejectsDuplicateSubmission(t *testing.T) {
 	n, err := NewNode()
 	assert.NoError(t, err)
-	_, err = n.Mine(8)
+	_, err = n.Mine()
 	assert.NoError(t, err)
 
 	tx := NewTransaction(n.Address(), "recipient", 10)
@@ -102,7 +102,7 @@ func TestNodeReceiveBlockFromPeer(t *testing.T) {
 	b, err := NewNode()
 	assert.NoError(t, err)
 
-	block, err := a.Mine(8)
+	block, err := a.Mine()
 	assert.NoError(t, err)
 	assert.NoError(t, b.ReceiveBlock(block))
 	assert.Equal(t, 2, b.Chain.Length())
@@ -115,7 +115,7 @@ func TestNodeReceiveBlockRejectsInvalid(t *testing.T) {
 	b, err := NewNode()
 	assert.NoError(t, err)
 
-	block, err := a.Mine(8)
+	block, err := a.Mine()
 	assert.NoError(t, err)
 	block.Header.Hash = "0000000000000000000000000000000000000000000000000000000000000000"
 	assert.Error(t, b.ReceiveBlock(block))
